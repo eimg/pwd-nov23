@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/all.min.css">
+</head>
+<body>
+    <nav class="navbar navbar-dark bg-dark">
+        <div class="container" style="max-width: 600px;">
+            <a href="#" class="navbar-brand">Category</a>
+        </div>
+    </nav>
+
+    <div class="container" style="max-width: 600px;">
+        <div class="input-group my-4">
+            <input type="text" class="form-control">
+            <button class="btn btn-dark">
+                <i class="fa-solid fa-add"></i>
+            </button>
+        </div>
+        <ul class="list-group"></ul>
+    </div>
+
+    <script>
+        const api = "http://localhost:8000/api/categories";
+        const token = "1|mtKr6Ev92hkaQi4vykhZWlmPvUmlmxmdSxOV2EGx08b96217";
+
+        fetch(api, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+            }
+        })
+        .then(res => res.json())
+        .then(data => data.map(category => {
+            createItem(category);
+        }));
+
+        document.querySelector("button").onclick = () => {
+            let name = document.querySelector("input").value;
+            if(!name) return false;
+
+            fetch(api, {
+                method: 'post',
+                body: JSON.stringify({ name }),
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`,
+                }
+            })
+            .then(res => res.json())
+            .then(category => createItem(category));
+
+            document.querySelector("input").value = "";
+            document.querySelector("input").focus();
+        }
+
+        function createItem(category) {
+            let li = document.createElement("li");
+            li.classList.add("list-group-item");
+            li.innerHTML = `<span>${category.name}</span>`;
+
+            let del = document.createElement("a");
+            del.setAttribute("href", "#");
+            del.classList.add("fa-solid", "fa-trash", "text-danger", "float-end");
+            del.onclick = () => {
+                fetch(`${api}/${category.id}`, {
+                    method: 'delete',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                    }
+                });
+
+                li.remove();
+            }
+            li.appendChild(del);
+
+            let edit = document.createElement("a");
+            edit.setAttribute("href", "#");
+            edit.classList.add("fa-solid", "fa-edit", "float-end", "me-3");
+            edit.onclick = () => {
+                let name = li.querySelector("span").textContent;
+                let update = prompt("Enter name", name);
+                if(!update) return false;
+                
+                li.querySelector("span").textContent = update;
+
+                fetch(`${api}/${category.id}`, {
+                    method: 'put',
+                    body: JSON.stringify({ name: update }),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                });
+            }
+            li.appendChild(edit);
+
+            document.querySelector("ul").appendChild(li);
+        }
+    </script>
+</body>
+</html>
